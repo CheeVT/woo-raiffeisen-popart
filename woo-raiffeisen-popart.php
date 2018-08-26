@@ -53,8 +53,11 @@ function myStartSession() {
 
 /**
  * Raiffeisen Payment Gateway
- * 
  *
+ * Provides an Offline Payment Gateway; mainly for testing purposes.
+ * We load it later to ensure WC is loaded first since we're extending it.
+ *
+ * @class       WC_Gateway_Offline
  * @extends     WC_Payment_Gateway
  * @version     1.0.0
  * @package     WooCommerce/Classes/Payment
@@ -128,12 +131,20 @@ function wc_raiffeisen_gateway_init() {
                     'default' => '',
                     'desc_tip' => true,
                 ),
+                'gatewayAddress' => array(
+                    'title' => __('Gateway Address', 'wc-gateway-raiffeisen'),
+                    'type' => 'select',
+                    'description' => __('This controls gateway for form action, and redirect to payment page', 'wc-gateway-offline'),
+                    'default' => __('', 'wc-gateway-raiffeisen'),
+                    'desc_tip' => true,
+                    'options' => array('https://ecg.test.upc.ua/ecgtestrs/enter' => 'Test', 'https://ecommerce.raiffeisenbank.rs/rbrs/enter' => 'Production')
+                ),
                 'terminalid' => array(
                     'title' => __('Terminal ID', 'wc-gateway-raiffeisen'),
                     'type' => 'text',
                     'description' => __('This controls the title for the payment method the customer sees during checkout.', 'wc-gateway-offline'),
                     'default' => __('', 'wc-gateway-raiffeisen'),
-                    'desc_tip' => true,
+                    'desc_tip' => true
                 ),
                 'merchantid' => array(
                     'title' => __('Merchant ID', 'wc-gateway-raiffeisen'),
@@ -148,7 +159,7 @@ function wc_raiffeisen_gateway_init() {
                     'description' => __('', 'wc-gateway-offline'),
                     'default' => __('', 'wc-gateway-raiffeisen'),
                     'desc_tip' => false,
-                    'options' => array('941' => 'Serbian dinar (RSD)', '978' => 'Euro (€)')
+                    'options' => array('941' => 'Serbian dinar (RSD)', '978' => 'Euro (€)', '840' => 'Dollar ($)')
                 )
             ));
         }
@@ -187,7 +198,7 @@ function wc_raiffeisen_gateway_init() {
 
             global $woocommerce;
             //$order = wc_get_order($order_id);
-			$order = new WC_Order($order_id);
+            $order = new WC_Order($order_id);
 
             //setcookie('order_id-akumulator-shop', $order_id, 1 * 86400);
             // Mark as on-hold (we're awaiting the payment)
@@ -199,20 +210,13 @@ function wc_raiffeisen_gateway_init() {
             WC()->cart->empty_cart();
             // Return thankyou redirect
             $_SESSION['return_url'] = $this->get_return_url($order);
-            //$_SESSION['total'] = $order->total;	
-			$currency = get_woocommerce_currency();
-			
-			
-			
-			$_SESSION['currency'] = $currency;
-			if($currency == 'RSD') {
-				$_SESSION['total'] = $order->get_total();
-			} else {
-				$_SESSION['total'] = $order->get_total();
-				/*$convert_rate = djb_get_currency();				
-				$_SESSION['total'] = round($order->get_total() / $convert_rate, 2, PHP_ROUND_HALF_UP);*/
-				
-			}
+            //$_SESSION['total'] = $order->total;
+            $currency = get_woocommerce_currency();
+
+
+
+            $_SESSION['currency'] = $currency;
+            $_SESSION['total'] = $order->get_total();
             $_SESSION['order_id'] = $order_id;
             return array(
                 'result' => 'success',
